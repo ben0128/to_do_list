@@ -2,6 +2,7 @@ const express = require('express')
 const exphbs = require('express-handlebars')
 const mongoose = require('mongoose') // 載入 mongoose
 const Todo = require('./models/todo')
+const bodyParser = require('body-parser') // 引用 body-parser
 
 const app = express()
 
@@ -9,9 +10,9 @@ app.engine('hbs', exphbs({ defaultLayout: 'main', extname: '.hbs' }))
 app.set('view engine', 'hbs')
 
 // 加入這段 code, 僅在非正式環境時, 使用 dotenv
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config()
-}
+// if (process.env.NODE_ENV !== 'production') {
+//   require('dotenv').config()
+// }
 
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }) // 設定連線到 mongoDB
 
@@ -32,11 +33,26 @@ db.once('open', () => {
   console.log('done')
 })
 
+
+// 用 app.use 規定每一筆請求都需要透過 body-parser 進行前置處理
+app.use(bodyParser.urlencoded({ extended: true }))
+
 app.get('/',(req, res) => {
   Todo.find()  // 把所有資料拿出來，也可以在括號加上想查詢的資料
     .lean()  // 把 Mongoose 的 Model 物件轉換成乾淨的 JavaScript 資料陣列
     .then(todos => res.render('index', { todos }))  // 將資料傳給 index 樣板
-    .catch(error => console.error('error')) // 錯誤處理
+    .catch(error => console.error(error)) // 錯誤處理
+})
+
+app.get('/todos/new', (req, res) => {
+  return res.render('new')
+})
+
+app.post('/todos', (req,res) => {
+  const name = req.body.name
+  return Todo.create({name})
+    .then(()=>redirect('/'))
+    .catch(error => console.log(error))        
 })
 
 app.listen(3000, ()=>{
