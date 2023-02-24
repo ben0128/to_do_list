@@ -48,7 +48,8 @@ app.get('/todos/new', (req, res) => {
   return res.render('new')
 })
 
-app.get('./todos/:id', (req,res) => {
+//瀏覽單筆todo的細節
+app.get('/todos/:id', (req,res) => {
   const id = req.params.id
   return Todo.findById(id)
     .lean()
@@ -56,11 +57,34 @@ app.get('./todos/:id', (req,res) => {
     .catch(error => console.log(error))
 })
 
+//新增一筆todo
 app.post('/todos', (req,res) => {
   const name = req.body.name
   return Todo.create({name})
     .then(()=>redirect('/'))
     .catch(error => console.log(error))        
+})
+
+//進入編輯todo的畫面
+app.get('/todos/:id/edit', (req,res) => {
+  const id = req.params.id
+  return Todo.findById(id)
+    .lean()
+    .then((todo) => res.render('edit', {todo}))
+    .catch(error => console.log(error))
+})
+
+//更新一筆todo
+app.post('/todos/:id/edit',(req, res) => {
+  const id = req.params.id
+  const name = req.body.name
+  return Todo.findById(id)
+    .then(todo => {
+      todo.name = name
+      return todo.save()
+    })
+    .then(() => res.redirect(`/todos/${id}`))
+    .catch(error => console.log(error))
 })
 
 app.listen(3000, ()=>{
