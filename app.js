@@ -6,15 +6,15 @@ const bodyParser = require('body-parser') // 引用 body-parser
 
 const app = express()
 
-app.engine('hbs', exphbs.engine({ defaultLayout: 'main', extname: '.hbs' }))
-app.set('view engine', 'hbs')
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }) // 設定連線到 mongoDB
+
 
 // 加入這段 code, 僅在非正式環境時, 使用 dotenv
 // if (process.env.NODE_ENV !== 'production') {
 //   require('dotenv').config()
 // }
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }) // 設定連線到 mongoDB
+
 
 // 取得資料庫連線狀態
 const db = mongoose.connection
@@ -33,6 +33,8 @@ db.once('open', () => {
   console.log('done')
 })
 
+app.engine('hbs', exphbs.engine({ defaultLayout: 'main', extname: '.hbs' }))
+app.set('view engine', 'hbs')
 
 // 用 app.use 規定每一筆請求都需要透過 body-parser 進行前置處理
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -48,29 +50,31 @@ app.get('/todos/new', (req, res) => {
   return res.render('new')
 })
 
-//瀏覽單筆todo的細節
-app.get('/todos/:id', (req,res) => {
-  const id = req.params.id
-  return Todo.findById(id)
-    .lean()
-    .then((todo)=>res.render('detail', {todo}))
-    .catch(error => console.log(error))
-})
-
 //新增一筆todo
 app.post('/todos', (req,res) => {
   const name = req.body.name
+  
   return Todo.create({name})
     .then(()=>redirect('/'))
     .catch(error => console.log(error))        
 })
 
-//進入編輯todo的畫面
-app.get('/todos/:id/edit', (req,res) => {
+//瀏覽單筆todo的細節
+app.get('/todos/:id', (req,res) => {
   const id = req.params.id
   return Todo.findById(id)
     .lean()
-    .then((todo) => res.render('edit', {todo}))
+    .then((todo)=>res.render('detail', { todo }))
+    .catch(error => console.log(error))
+})
+
+
+//進入編輯todo的畫面
+app.get('/todos/:id/edit', (req, res) => {
+  const id = req.params.id
+  return Todo.findById(id)
+    .lean()
+    .then((todo) => res.render('edit', { todo }))
     .catch(error => console.log(error))
 })
 
@@ -84,6 +88,14 @@ app.post('/todos/:id/edit',(req, res) => {
       return todo.save()
     })
     .then(() => res.redirect(`/todos/${id}`))
+    .catch(error => console.log(error))
+})
+
+app.post('/todos/:id/delete', (req, res) => {
+  const id = req.params.id
+  return Todo.findById(id)
+    .then(todo => todo.remove())
+    .then(()=> res.redirect('/'))
     .catch(error => console.log(error))
 })
 
