@@ -9,10 +9,10 @@ const app = express()
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }) // 設定連線到 mongoDB
 
 
-// 加入這段 code, 僅在非正式環境時, 使用 dotenv
-// if (process.env.NODE_ENV !== 'production') {
-//   require('dotenv').config()
-// }
+//加入這段 code, 僅在非正式環境時, 使用 dotenv
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
 
 
 
@@ -25,10 +25,6 @@ db.on('error', () => {
 // 連線成功
 db.once('open', () => {
   console.log('mongodb connected!')
-
-  for (let i=0; i<10; i++) {
-    Todo.create({name:`name-${i}`})
-  }
 
   console.log('done')
 })
@@ -91,6 +87,8 @@ app.post('/todos/:id/edit',(req, res) => {
     .catch(error => console.log(error))
 })
 
+
+//刪除一筆資料
 app.post('/todos/:id/delete', (req, res) => {
   const id = req.params.id
   return Todo.findById(id)
