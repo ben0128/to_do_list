@@ -3,18 +3,14 @@ const exphbs = require('express-handlebars')
 const mongoose = require('mongoose') // 載入 mongoose
 const Todo = require('./models/todo')
 const bodyParser = require('body-parser') // 引用 body-parser
-
 const app = express()
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }) // 設定連線到 mongoDB
-
+mongoose.connect('mongodb+srv://alpha:camp@cluster0.dgxufmq.mongodb.net/?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true }) // 設定連線到 mongoDB
 
 //加入這段 code, 僅在非正式環境時, 使用 dotenv
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config()
 }
-
-
 
 // 取得資料庫連線狀態
 const db = mongoose.connection
@@ -25,11 +21,9 @@ db.on('error', () => {
 // 連線成功
 db.once('open', () => {
   console.log('mongodb connected!')
-
-  console.log('done')
 })
 
-app.engine('hbs', exphbs.engine({ defaultLayout: 'main', extname: '.hbs' }))
+app.engine('hbs', exphbs({ defaultLayout: 'main', extname: '.hbs' }))
 app.set('view engine', 'hbs')
 
 // 用 app.use 規定每一筆請求都需要透過 body-parser 進行前置處理
@@ -42,28 +36,28 @@ app.get('/',(req, res) => {
     .catch(error => console.error(error)) // 錯誤處理
 })
 
+//讓使用者可以增加新事件
 app.get('/todos/new', (req, res) => {
   return res.render('new')
 })
 
-//新增一筆todo
-app.post('/todos', (req,res) => {
+//接住表單資料，並從表單內拿出名字的資料，傳入資料庫
+app.post('/todos', (req, res) => {
   const name = req.body.name
   
-  return Todo.create({name})
-    .then(()=>redirect('/'))
+  return Todo.create({ name })
+    .then(() => res.redirect('/'))
     .catch(error => console.log(error))        
 })
 
 //瀏覽單筆todo的細節
-app.get('/todos/:id', (req,res) => {
+app.get('/todos/:id', (req, res) => {
   const id = req.params.id
   return Todo.findById(id)
     .lean()
     .then((todo)=>res.render('detail', { todo }))
     .catch(error => console.log(error))
 })
-
 
 //進入編輯todo的畫面
 app.get('/todos/:id/edit', (req, res) => {
@@ -77,23 +71,23 @@ app.get('/todos/:id/edit', (req, res) => {
 //更新一筆todo
 app.post('/todos/:id/edit',(req, res) => {
   const id = req.params.id
-  const name = req.body.name
+  const { name, isDone } = req.body
   return Todo.findById(id)
     .then(todo => {
       todo.name = name
+      todo.isDone = isDone === 'on'
       return todo.save()
     })
     .then(() => res.redirect(`/todos/${id}`))
     .catch(error => console.log(error))
 })
 
-
 //刪除一筆資料
 app.post('/todos/:id/delete', (req, res) => {
   const id = req.params.id
   return Todo.findById(id)
     .then(todo => todo.remove())
-    .then(()=> res.redirect('/'))
+    .then(() => res.redirect('/'))
     .catch(error => console.log(error))
 })
 
