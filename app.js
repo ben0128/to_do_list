@@ -4,6 +4,7 @@ const mongoose = require('mongoose') // 載入 mongoose
 const Todo = require('./models/todo')
 const bodyParser = require('body-parser') // 引用 body-parser
 const app = express()
+const methodOverride = require('method-override') // 載入 method-override
 
 mongoose.connect('mongodb+srv://alpha:camp@cluster0.dgxufmq.mongodb.net/?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true }) // 設定連線到 mongoDB
 
@@ -26,8 +27,9 @@ db.once('open', () => {
 app.engine('hbs', exphbs({ defaultLayout: 'main', extname: '.hbs' }))
 app.set('view engine', 'hbs')
 
-// 用 app.use 規定每一筆請求都需要透過 body-parser 進行前置處理
-app.use(bodyParser.urlencoded({ extended: true }))
+
+app.use(bodyParser.urlencoded({ extended: true })) // 用 app.use 規定每一筆請求都需要透過 body-parser 進行前置處理
+app.use(methodOverride('_method')) // 設定每一筆請求都會透過 methodOverride 進行前置處理
 
 app.get('/',(req, res) => {
   Todo.find()  // 把所有資料拿出來，也可以在括號加上想查詢的資料
@@ -70,9 +72,10 @@ app.get('/todos/:id/edit', (req, res) => {
 })
 
 //更新一筆todo
-app.post('/todos/:id/edit',(req, res) => {
+app.put('/todos/:id',(req, res) => {
   const id = req.params.id
   const { name, isDone } = req.body
+
   return Todo.findById(id)
     .then(todo => {
       todo.name = name
@@ -84,7 +87,7 @@ app.post('/todos/:id/edit',(req, res) => {
 })
 
 //刪除一筆資料
-app.post('/todos/:id/delete', (req, res) => {
+app.delete('/todos/:id', (req, res) => {
   const id = req.params.id
   return Todo.findById(id)
     .then(todo => todo.remove())
