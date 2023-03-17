@@ -4,6 +4,7 @@ const session = require('express-session')
 const usePassport = require('./config/passport') // 載入設定檔，要寫在 express-session 以後
 const app = express()
 const methodOverride = require('method-override') // 載入 method-override
+const flash = require('connect-flash')
 const routes = require('./routes') // 將 request 導入路由器
 
 const PORT = process.env.PORT || 3000 // 連結到heroku或是連到3000
@@ -24,10 +25,13 @@ app.use(express.urlencoded({ extended: true })) // 用 app.use 規定每一筆�
 app.use(methodOverride('_method')) // 設定每一筆請求都會透過 methodOverride 進行前置處理
 
 usePassport(app) // 呼叫 Passport 函式並傳入 app，這條要寫在路由之前
+app.use(flash())
 app.use((req, res, next) => {
   // 你可以在這裡 console.log(req.user) 等資訊來觀察
   res.locals.isAuthenticated = req.isAuthenticated()
   res.locals.user = req.user // res.locals 是 Express.js 幫我們開的一條捷徑，放在 res.locals 裡的資料，所有的 view 都可以存取。
+  res.locals.success_msg = req.flash('success_msg')  // 設定 success_msg 訊息
+  res.locals.warning_msg = req.flash('warning_msg')  // 設定 warning_msg 訊息  
   next()
 })
 app.use(routes)
