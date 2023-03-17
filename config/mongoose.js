@@ -1,6 +1,6 @@
 const mongoose = require('mongoose') // 載入 mongoose
 
-mongoose.connect('mongodb+srv://alpha:camp@cluster0.dgxufmq.mongodb.net/todo-list?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true }) // 設定連線到 mongoDB
+mongoose.connect('mongodb+srv://alpha:camp@cluster0.dgxufmq.mongodb.net/todo-list?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}) // 設定連線到 mongoDB
 
 //加入這段 code, 僅在非正式環境時, 使用 dotenv
 if (process.env.NODE_ENV !== 'production') {
